@@ -125,11 +125,81 @@ body {
   font-size: 12px;
 }
 
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.new-file-button {
+  padding: 4px 12px;
+  border: 1px solid var(--card-edge);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--accent);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.new-file-button:hover {
+  background: #fff1ed;
+  border-color: var(--accent);
+}
+
+.create-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.create-input {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-edge);
+  font-size: 14px;
+  min-width: 0;
+}
+
+.create-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.create-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.create-button:disabled {
+  background: #f3b3ab;
+  cursor: not-allowed;
+}
+
 .file-list {
   display: grid;
   gap: 8px;
   max-height: 240px;
   overflow-y: auto;
+}
+
+.file-item-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.file-item-row .file-item {
+  flex: 1;
+  min-width: 0;
 }
 
 .file-item {
@@ -151,6 +221,40 @@ body {
 
 .file-item:hover {
   border-color: #f5b2a8;
+}
+
+.delete-button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.file-item-row:hover .delete-button {
+  opacity: 1;
+}
+
+.delete-button:hover {
+  background: #fde8e4;
+  color: var(--accent-strong);
+}
+
+.delete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .editor-panel {

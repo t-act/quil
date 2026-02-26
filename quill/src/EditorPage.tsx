@@ -5,6 +5,8 @@ import {
   RepoInfo,
   UserResponse,
   commitFile,
+  createFile,
+  deleteFile,
   fetchFile,
   fetchFiles,
   fetchRepos,
@@ -30,6 +32,10 @@ export default function EditorPage({ user, onAuthError, logout }: Props) {
   const [loadingFile, setLoadingFile] = useState(false)
   const [committing, setCommitting] = useState(false)
   const [status, setStatus] = useState<Status>({ type: 'idle', message: '' })
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [newFileName, setNewFileName] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   const handleAuthError = (err: unknown) => {
     if (err instanceof AuthError) {
@@ -58,28 +64,34 @@ export default function EditorPage({ user, onAuthError, logout }: Props) {
     load()
   }, [])
 
+  const loadFiles = async (selectPath?: string) => {
+    if (!selectedRepo) return
+    setLoadingFiles(true)
+    setStatus({ type: 'idle', message: '' })
+    try {
+      const data = await fetchFiles(selectedRepo.owner, selectedRepo.name, selectedRepo.default_branch)
+      setFiles(data.files)
+      if (selectPath && data.files.includes(selectPath)) {
+        setSelected(selectPath)
+      } else if (data.files.length > 0 && !selectPath) {
+        setSelected(data.files[0])
+      }
+    } catch (err) {
+      if (!handleAuthError(err)) {
+        setStatus({ type: 'error', message: `ファイル一覧の取得に失敗しました: ${String(err)}` })
+      }
+    } finally {
+      setLoadingFiles(false)
+    }
+  }
+
   // リポジトリ選択時にファイル一覧を取得
   useEffect(() => {
     if (!selectedRepo) return
     setFiles([])
     setSelected(null)
     setContent('')
-    const load = async () => {
-      setLoadingFiles(true)
-      setStatus({ type: 'idle', message: '' })
-      try {
-        const data = await fetchFiles(selectedRepo.owner, selectedRepo.name, selectedRepo.default_branch)
-        setFiles(data.files)
-        if (data.files.length > 0) setSelected(data.files[0])
-      } catch (err) {
-        if (!handleAuthError(err)) {
-          setStatus({ type: 'error', message: `ファイル一覧の取得に失敗しました: ${String(err)}` })
-        }
-      } finally {
-        setLoadingFiles(false)
-      }
-    }
-    load()
+    loadFiles()
   }, [selectedRepo])
 
   // ファイル選択時にファイル内容を取得
@@ -106,6 +118,61 @@ export default function EditorPage({ user, onAuthError, logout }: Props) {
     () => !!selected && !!selectedRepo && !loadingFile && !committing,
     [selected, selectedRepo, loadingFile, committing],
   )
+
+  const handleCreate = async () => {
+    if (!selectedRepo || !newFileName.trim()) return
+    const name = newFileName.trim().endsWith('.md') ? newFileName.trim() : `${newFileName.trim()}.md`
+    setCreating(true)
+    setStatus({ type: 'idle', message: '' })
+    try {
+      await createFile(
+        selectedRepo.owner,
+        selectedRepo.name,
+        selectedRepo.default_branch,
+        name,
+        '',
+        `Create ${name}`,
+      )
+      setShowCreateForm(false)
+      setNewFileName('')
+      setStatus({ type: 'success', message: `${name} を作成しました。` })
+      await loadFiles(name)
+    } catch (err) {
+      if (!handleAuthError(err)) {
+        setStatus({ type: 'error', message: `ファイル作成に失敗しました: ${String(err)}` })
+      }
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleDelete = async (path: string) => {
+    if (!selectedRepo) return
+    if (!window.confirm(`「${path}」を削除しますか？`)) return
+    setDeleting(path)
+    setStatus({ type: 'idle', message: '' })
+    try {
+      await deleteFile(
+        selectedRepo.owner,
+        selectedRepo.name,
+        selectedRepo.default_branch,
+        path,
+        `Delete ${path}`,
+      )
+      setStatus({ type: 'success', message: `${path} を削除しました。` })
+      if (selected === path) {
+        setSelected(null)
+        setContent('')
+      }
+      await loadFiles()
+    } catch (err) {
+      if (!handleAuthError(err)) {
+        setStatus({ type: 'error', message: `ファイル削除に失敗しました: ${String(err)}` })
+      }
+    } finally {
+      setDeleting(null)
+    }
+  }
 
   const handleCommit = async () => {
     if (!selected || !selectedRepo) return
@@ -182,20 +249,58 @@ export default function EditorPage({ user, onAuthError, logout }: Props) {
         <section className="panel file-panel">
           <div className="panel-header">
             <h2>ファイル一覧</h2>
-            {loadingFiles && <span className="pill">Loading...</span>}
+            <div className="panel-header-actions">
+              {loadingFiles && <span className="pill">Loading...</span>}
+              {selectedRepo && (
+                <button
+                  className="new-file-button"
+                  onClick={() => setShowCreateForm(!showCreateForm)}
+                >
+                  {showCreateForm ? 'キャンセル' : '+ 新規'}
+                </button>
+              )}
+            </div>
           </div>
+          {showCreateForm && (
+            <div className="create-form">
+              <input
+                className="create-input"
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                placeholder="ファイル名.md"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleCreate() }}
+                autoFocus
+              />
+              <button
+                className="create-button"
+                onClick={handleCreate}
+                disabled={!newFileName.trim() || creating}
+              >
+                {creating ? '作成中...' : '作成'}
+              </button>
+            </div>
+          )}
           <div className="file-list">
             {files.length === 0 && !loadingFiles ? (
               <p className="muted">Markdownファイルが見つかりません。</p>
             ) : (
               files.map((file) => (
-                <button
-                  key={file}
-                  className={`file-item ${file === selected ? 'active' : ''}`}
-                  onClick={() => setSelected(file)}
-                >
-                  {file}
-                </button>
+                <div key={file} className="file-item-row">
+                  <button
+                    className={`file-item ${file === selected ? 'active' : ''}`}
+                    onClick={() => setSelected(file)}
+                  >
+                    {file}
+                  </button>
+                  <button
+                    className="delete-button"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(file) }}
+                    disabled={deleting === file}
+                    title={`${file} を削除`}
+                  >
+                    {deleting === file ? '...' : '×'}
+                  </button>
+                </div>
               ))
             )}
           </div>
