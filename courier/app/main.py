@@ -2,6 +2,7 @@ import os
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
@@ -142,3 +143,7 @@ def post_delete_file(payload: DeleteFileRequest, session: SessionData = Depends(
         return {"path": payload.path, "commit": result.get("commit")}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# AWS Lambda handler
+handler = Mangum(app)
