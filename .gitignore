@@ -1,0 +1,10 @@
+.env
+.env*
+.claude
+.DS_Store
+node_modules
+.venv
+__pycache__
+claude.md
+dist/
+*.tsbuildinfo

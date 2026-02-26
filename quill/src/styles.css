@@ -1,0 +1,446 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+:root {
+  color-scheme: light;
+  --bg: #f4f2ef;
+  --ink: #1e1f22;
+  --muted: #5b626a;
+  --accent: #f04f3d;
+  --accent-strong: #d83b2d;
+  --card: #ffffff;
+  --card-edge: #e5e2dd;
+  --shadow: 0 18px 50px rgba(30, 31, 34, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at top, #fff6e8, transparent 55%),
+    radial-gradient(circle at 20% 80%, #ffe8e1, transparent 50%),
+    var(--bg);
+  color: var(--ink);
+}
+
+.app {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.hero {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-edge);
+}
+
+.eyebrow {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.hero h1 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 32px;
+  margin: 0 0 8px;
+}
+
+.subhead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.status-panel {
+  padding: 16px;
+  background: #1e1f22;
+  color: #fff7f2;
+  border-radius: 16px;
+}
+
+.status-panel h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #f1c2bc;
+}
+
+.status {
+  font-size: 14px;
+}
+
+.status.success {
+  color: #b6fcd5;
+}
+
+.status.error {
+  color: #ffd1c7;
+}
+
+.status.idle {
+  color: #fef2dd;
+}
+
+.layout {
+  margin-top: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.panel {
+  background: var(--card);
+  border-radius: 20px;
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 18px;
+}
+
+.pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f6e2df;
+  font-size: 12px;
+}
+
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.new-file-button {
+  padding: 4px 12px;
+  border: 1px solid var(--card-edge);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--accent);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.new-file-button:hover {
+  background: #fff1ed;
+  border-color: var(--accent);
+}
+
+.create-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.create-input {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-edge);
+  font-size: 14px;
+  min-width: 0;
+}
+
+.create-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.create-button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.create-button:disabled {
+  background: #f3b3ab;
+  cursor: not-allowed;
+}
+
+.file-list {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.file-item-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.file-item-row .file-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-item {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: #f9f6f1;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.file-item.active {
+  border-color: var(--accent);
+  background: #fff1ed;
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.file-item:hover {
+  border-color: #f5b2a8;
+}
+
+.delete-button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.file-item-row:hover .delete-button {
+  opacity: 1;
+}
+
+.delete-button:hover {
+  background: #fde8e4;
+  color: var(--accent-strong);
+}
+
+.delete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.editor-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.editor-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--card-edge);
+  background: #fff;
+}
+
+.commit-bar {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr auto;
+}
+
+.commit-input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-edge);
+  font-size: 14px;
+}
+
+.commit-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.commit-button:disabled {
+  background: #f3b3ab;
+  cursor: not-allowed;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (min-width: 960px) {
+  .layout {
+    grid-template-columns: 260px 1fr;
+    align-items: start;
+  }
+
+  .hero {
+    grid-template-columns: 1.5fr 1fr;
+    align-items: center;
+  }
+
+  .file-list {
+    max-height: 440px;
+  }
+}
+
+/* ---- Login Page ---- */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.login-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+}
+
+.login-card h1 {
+  font-size: 2.4rem;
+  margin: 8px 0 12px;
+}
+
+.github-login-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 28px;
+  padding: 12px 24px;
+  background: #24292f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.github-login-button:hover {
+  background: #444c56;
+}
+
+.github-login-button svg {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
+}
+
+/* ---- Loading Screen ---- */
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+/* ---- User Info ---- */
+.header-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.logout-button {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--muted);
+  transition: border-color 0.2s;
+}
+
+.logout-button:hover {
+  border-color: #888;
+  color: var(--text);
+}
+
+/* ---- Repo Bar ---- */
+.repo-bar {
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.repo-bar label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.repo-bar select {
+  flex: 1;
+  max-width: 480px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+}
