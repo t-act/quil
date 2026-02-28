@@ -200,26 +200,15 @@ export default function EditorPage({ user, onAuthError, logout }: Props) {
 
   return (
     <div className="app" data-color-mode="light">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Markdown Editor → GitHub Commit</p>
-          <h1>モバイルでもサクッと編集</h1>
-          <p className="subhead">GitHub上のMarkdownを読み込み、編集し、そのままコミット。</p>
-        </div>
-        <div className="header-right">
-          <div className="status-panel">
-            <h2>ステータス</h2>
-            {status.message ? (
-              <div className={`status ${status.type}`}>{status.message}</div>
-            ) : (
-              <div className="status idle">準備OK</div>
-            )}
-          </div>
-          <div className="user-info">
-            <img src={user.avatar_url} alt={user.login} className="avatar" />
-            <span className="username">{user.login}</span>
-            <button className="logout-button" onClick={logout}>ログアウト</button>
-          </div>
+      <header className="topbar">
+        <span className="topbar-title">Quill</span>
+        {status.message && (
+          <span className={`topbar-status ${status.type}`}>{status.message}</span>
+        )}
+        <div className="topbar-right">
+          <img src={user.avatar_url} alt={user.login} className="avatar" />
+          <span className="username">{user.login}</span>
+          <button className="logout-button" onClick={logout}>ログアウト</button>
         </div>
       </header>
 

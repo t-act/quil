@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
 export class AuthError extends Error {
   constructor() {
@@ -50,22 +50,15 @@ export type FileResponse = { path: string; content: string }
 export type CommitResponse = { path: string; commit?: unknown; content?: unknown }
 
 export async function fetchFiles(owner: string, repo: string, branch: string): Promise<FileListResponse> {
-  const url = new URL(`${API_BASE}/files`)
-  url.searchParams.set('owner', owner)
-  url.searchParams.set('repo', repo)
-  url.searchParams.set('branch', branch)
-  const res = await apiFetch(url)
+  const params = new URLSearchParams({ owner, repo, branch })
+  const res = await apiFetch(`${API_BASE}/files?${params}`)
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }
 
 export async function fetchFile(owner: string, repo: string, path: string, branch: string): Promise<FileResponse> {
-  const url = new URL(`${API_BASE}/file`)
-  url.searchParams.set('owner', owner)
-  url.searchParams.set('repo', repo)
-  url.searchParams.set('path', path)
-  url.searchParams.set('branch', branch)
-  const res = await apiFetch(url)
+  const params = new URLSearchParams({ owner, repo, path, branch })
+  const res = await apiFetch(`${API_BASE}/file?${params}`)
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }

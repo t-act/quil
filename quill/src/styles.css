@@ -2,14 +2,14 @@
 
 :root {
   color-scheme: light;
-  --bg: #f4f2ef;
-  --ink: #1e1f22;
-  --muted: #5b626a;
-  --accent: #f04f3d;
-  --accent-strong: #d83b2d;
-  --card: #ffffff;
-  --card-edge: #e5e2dd;
-  --shadow: 0 18px 50px rgba(30, 31, 34, 0.12);
+  --bg: #fafafa;
+  --ink: #111;
+  --muted: #888;
+  --accent: #111;
+  --accent-strong: #000;
+  --card: #fff;
+  --card-edge: #e0e0e0;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 * {
@@ -19,89 +19,120 @@
 body {
   margin: 0;
   font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at top, #fff6e8, transparent 55%),
-    radial-gradient(circle at 20% 80%, #ffe8e1, transparent 50%),
-    var(--bg);
+  background: var(--bg);
   color: var(--ink);
 }
 
 .app {
   min-height: 100vh;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
-.hero {
-  display: grid;
-  gap: 20px;
-  padding: 20px;
-  border-radius: 24px;
+/* ---- Topbar ---- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--card-edge);
   background: var(--card);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--card-edge);
 }
 
-.eyebrow {
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-size: 12px;
-  color: var(--muted);
-  margin: 0 0 8px;
-}
-
-.hero h1 {
+.topbar-title {
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 32px;
-  margin: 0 0 8px;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
 }
 
-.subhead {
-  margin: 0;
+.topbar-status {
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+.topbar-status.success {
+  color: #2d8a56;
+}
+
+.topbar-status.error {
+  color: #c44d3d;
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.username {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.logout-button {
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
   color: var(--muted);
-  font-size: 15px;
+  transition: border-color 0.15s, color 0.15s;
 }
 
-.status-panel {
-  padding: 16px;
-  background: #1e1f22;
-  color: #fff7f2;
-  border-radius: 16px;
+.logout-button:hover {
+  border-color: #999;
+  color: var(--ink);
 }
 
-.status-panel h2 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #f1c2bc;
+/* ---- Repo Bar ---- */
+.repo-bar {
+  padding: 10px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--card-edge);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
 }
 
-.status {
-  font-size: 14px;
+.repo-bar label {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted);
 }
 
-.status.success {
-  color: #b6fcd5;
+.repo-bar select {
+  flex: 1;
+  max-width: 480px;
+  padding: 5px 8px;
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  font-size: 13px;
+  background: var(--bg);
 }
 
-.status.error {
-  color: #ffd1c7;
-}
-
-.status.idle {
-  color: #fef2dd;
-}
-
+/* ---- Layout ---- */
 .layout {
-  margin-top: 24px;
+  flex: 1;
   display: grid;
-  gap: 20px;
+  gap: 0;
 }
 
 .panel {
   background: var(--card);
-  border-radius: 20px;
-  border: 1px solid var(--card-edge);
-  box-shadow: var(--shadow);
+  border: none;
+  border-right: 1px solid var(--card-edge);
+  border-radius: 0;
+  box-shadow: none;
   padding: 16px;
 }
 
@@ -115,14 +146,19 @@ body {
 .panel h2 {
   margin: 0;
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-size: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
 .pill {
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: #f6e2df;
-  font-size: 12px;
+  background: #eee;
+  font-size: 11px;
+  color: var(--muted);
 }
 
 .panel-header-actions {
@@ -132,20 +168,20 @@ body {
 }
 
 .new-file-button {
-  padding: 4px 12px;
+  padding: 3px 10px;
   border: 1px solid var(--card-edge);
-  border-radius: 8px;
-  background: var(--card);
-  font-size: 13px;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  color: var(--accent);
+  color: var(--ink);
   transition: background 0.15s, border-color 0.15s;
 }
 
 .new-file-button:hover {
-  background: #fff1ed;
-  border-color: var(--accent);
+  background: #f0f0f0;
+  border-color: #999;
 }
 
 .create-form {
@@ -156,37 +192,37 @@ body {
 }
 
 .create-input {
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 6px 10px;
+  border-radius: 4px;
   border: 1px solid var(--card-edge);
-  font-size: 14px;
+  font-size: 13px;
   min-width: 0;
 }
 
 .create-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--ink);
 }
 
 .create-button {
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: none;
-  border-radius: 10px;
+  border-radius: 4px;
   background: var(--accent);
   color: white;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
 }
 
 .create-button:disabled {
-  background: #f3b3ab;
+  background: #ccc;
   cursor: not-allowed;
 }
 
 .file-list {
   display: grid;
-  gap: 8px;
+  gap: 2px;
   max-height: 240px;
   overflow-y: auto;
 }
@@ -204,37 +240,37 @@ body {
 
 .file-item {
   text-align: left;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 8px 10px;
+  border-radius: 4px;
   border: 1px solid transparent;
-  background: #f9f6f1;
-  font-size: 14px;
+  background: transparent;
+  font-size: 13px;
   cursor: pointer;
+  transition: background 0.1s;
 }
 
 .file-item.active {
-  border-color: var(--accent);
-  background: #fff1ed;
-  color: var(--accent-strong);
+  background: #f0f0f0;
+  color: var(--ink);
   font-weight: 600;
 }
 
 .file-item:hover {
-  border-color: #f5b2a8;
+  background: #f5f5f5;
 }
 
 .delete-button {
   position: absolute;
-  right: 6px;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   background: transparent;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -248,8 +284,8 @@ body {
 }
 
 .delete-button:hover {
-  background: #fde8e4;
-  color: var(--accent-strong);
+  background: #e8e8e8;
+  color: var(--ink);
 }
 
 .delete-button:disabled {
@@ -260,10 +296,12 @@ body {
 .editor-panel {
   display: grid;
   gap: 12px;
+  padding: 16px 20px;
+  border-right: none;
 }
 
 .editor-wrapper {
-  border-radius: 16px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--card-edge);
   background: #fff;
@@ -271,50 +309,51 @@ body {
 
 .commit-bar {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: 1fr auto;
 }
 
 .commit-input {
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
   border: 1px solid var(--card-edge);
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.commit-input:focus {
+  outline: none;
+  border-color: var(--ink);
 }
 
 .commit-button {
-  padding: 10px 18px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 4px;
   background: var(--accent);
   color: white;
   font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
 }
 
 .commit-button:disabled {
-  background: #f3b3ab;
+  background: #ccc;
   cursor: not-allowed;
 }
 
 .muted {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 @media (min-width: 960px) {
   .layout {
-    grid-template-columns: 260px 1fr;
-    align-items: start;
-  }
-
-  .hero {
-    grid-template-columns: 1.5fr 1fr;
-    align-items: center;
+    grid-template-columns: 240px 1fr;
+    align-items: stretch;
   }
 
   .file-list {
-    max-height: 440px;
+    max-height: calc(100vh - 240px);
   }
 }
 
@@ -329,16 +368,18 @@ body {
 
 .login-card {
   background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--card-edge);
+  border-radius: 8px;
   padding: 48px 40px;
   text-align: center;
-  max-width: 420px;
+  max-width: 380px;
   width: 100%;
 }
 
 .login-card h1 {
-  font-size: 2.4rem;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
   margin: 8px 0 12px;
 }
 
@@ -347,24 +388,24 @@ body {
   align-items: center;
   gap: 10px;
   margin-top: 28px;
-  padding: 12px 24px;
-  background: #24292f;
+  padding: 10px 20px;
+  background: #111;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s;
 }
 
 .github-login-button:hover {
-  background: #444c56;
+  background: #333;
 }
 
 .github-login-button svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   fill: #fff;
 }
 
@@ -375,72 +416,5 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  font-size: 1.1rem;
-}
-
-/* ---- User Info ---- */
-.header-right {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-}
-
-.username {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.logout-button {
-  padding: 4px 12px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  color: var(--muted);
-  transition: border-color 0.2s;
-}
-
-.logout-button:hover {
-  border-color: #888;
-  color: var(--text);
-}
-
-/* ---- Repo Bar ---- */
-.repo-bar {
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
-}
-
-.repo-bar label {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.repo-bar select {
-  flex: 1;
-  max-width: 480px;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.9rem;
-  background: #fff;
+  font-size: 14px;
 }
