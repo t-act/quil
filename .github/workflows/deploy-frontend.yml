@@ -32,7 +32,6 @@ jobs:
         run: |
           cd quill
           npm ci
-          echo "VITE_API_BASE=${{ vars.VITE_API_BASE }}" > .env.production
           npm run build
 
       - name: Deploy to S3

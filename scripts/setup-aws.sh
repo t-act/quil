@@ -134,7 +134,8 @@ info "Lambda デプロイパッケージをビルドしています..."
 cd "$PROJECT_DIR/courier"
 rm -rf package lambda.zip
 mkdir -p package
-pip install -r requirements.txt -t package/ --quiet
+python3 -m pip install -r requirements.txt -t package/ --quiet \
+  --platform manylinux2014_x86_64 --only-binary=:all: --python-version 3.11
 cp -r app/ package/app/
 cd package && zip -r ../lambda.zip . -q && cd ..
 rm -rf package
@@ -263,6 +264,8 @@ ok "OAC: $OAC_ID"
 
 info "CloudFront ディストリビューションを作成しています..."
 
+API_ORIGIN_DOMAIN="${API_ID}.execute-api.${AWS_REGION}.amazonaws.com"
+
 DIST_CONFIG=$(cat <<DIST
 {
   "CallerReference": "quill-$(date +%s)",
@@ -270,7 +273,7 @@ DIST_CONFIG=$(cat <<DIST
   "Enabled": true,
   "DefaultRootObject": "index.html",
   "Origins": {
-    "Quantity": 1,
+    "Quantity": 2,
     "Items": [
       {
         "Id": "s3-quill",
@@ -279,17 +282,51 @@ DIST_CONFIG=$(cat <<DIST
         "S3OriginConfig": {
           "OriginAccessIdentity": ""
         }
+      },
+      {
+        "Id": "api-quill",
+        "DomainName": "${API_ORIGIN_DOMAIN}",
+        "CustomOriginConfig": {
+          "HTTPSPort": 443,
+          "OriginProtocolPolicy": "https-only",
+          "OriginSslProtocols": {
+            "Quantity": 1,
+            "Items": ["TLSv1.2"]
+          }
+        }
       }
     ]
   },
   "DefaultCacheBehavior": {
     "TargetOriginId": "s3-quill",
     "ViewerProtocolPolicy": "redirect-to-https",
-    "AllowedMethods": ["GET", "HEAD"],
-    "CachedMethods": ["GET", "HEAD"],
+    "AllowedMethods": {
+      "Quantity": 2,
+      "Items": ["GET", "HEAD"]
+    },
     "Compress": true,
-    "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
-    "ForwardedValues": null
+    "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6"
+  },
+  "CacheBehaviors": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "PathPattern": "/api/*",
+        "TargetOriginId": "api-quill",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "AllowedMethods": {
+          "Quantity": 7,
+          "Items": ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"],
+          "CachedMethods": {
+            "Quantity": 2,
+            "Items": ["GET", "HEAD"]
+          }
+        },
+        "Compress": true,
+        "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+        "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+      }
+    ]
   },
   "CustomErrorResponses": {
     "Quantity": 2,
@@ -366,7 +403,7 @@ aws lambda update-function-configuration \
     GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET,
     SESSION_SECRET_KEY=$FERNET_KEY,
-    OAUTH_CALLBACK_URL=${API_URL}/auth/callback,
+    OAUTH_CALLBACK_URL=${FRONTEND_URL}/api/auth/callback,
     FRONTEND_ORIGIN=$FRONTEND_URL,
     ENV=production
   }" \
@@ -381,7 +418,7 @@ ok "Lambda 環境変数を更新しました"
 info "フロントエンドをビルドしています..."
 
 cd "$PROJECT_DIR/quill"
-echo "VITE_API_BASE=$API_URL" > .env.production
+rm -f .env.production
 npm install --silent
 npm run build
 
@@ -532,7 +569,7 @@ echo "  GitHub OAuth App の設定を更新してください"
 echo "-----------------------------------------"
 echo ""
 echo "  Homepage URL              : $FRONTEND_URL"
-echo "  Authorization callback URL: ${API_URL}/auth/callback"
+echo "  Authorization callback URL: ${FRONTEND_URL}/api/auth/callback"
 echo ""
 echo "-----------------------------------------"
 echo "  GitHub Actions の Secrets / Variables"
@@ -546,7 +583,6 @@ echo "  AWS_REGION                = $AWS_REGION"
 echo "  LAMBDA_FUNCTION_NAME      = $FUNCTION_NAME"
 echo "  S3_BUCKET_NAME            = $BUCKET_NAME"
 echo "  CLOUDFRONT_DISTRIBUTION_ID= $DIST_ID"
-echo "  VITE_API_BASE             = $API_URL"
 echo ""
 echo "設定値は $OUTPUT_FILE に保存しました。"
 echo ""

@@ -12,7 +12,7 @@ from .session import SessionData, get_session
 
 load_dotenv()
 
-app = FastAPI(title="Markdown Editor GitHub API")
+app = FastAPI(title="Markdown Editor GitHub API", root_path="/api")
 
 origins = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173").split(",")
 
