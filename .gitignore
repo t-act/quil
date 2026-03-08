@@ -9,3 +9,4 @@ claude.md
 dist/
 *.tsbuildinfo
 scripts/.deploy-output
+*.zip
