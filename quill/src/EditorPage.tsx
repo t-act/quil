@@ -301,7 +301,12 @@ export default function EditorPage({ user, onAuthError, logout }: Props) {
             {loadingFile && <span className="pill">Loading...</span>}
           </div>
           <div className="editor-wrapper">
-            <MDEditor value={content} onChange={(val) => setContent(val ?? '')} height={420} />
+            <MDEditor
+              value={content}
+              onChange={(val) => setContent(val ?? '')}
+              height={420}
+              preview={window.innerWidth <= 768 ? 'edit' : 'live'}
+            />
           </div>
           <div className="commit-bar">
             <input
