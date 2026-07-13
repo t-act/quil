@@ -1,0 +1,41 @@
+name: Deploy Cloudflare
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'quill/**'
+      - 'worker/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # フロントをビルドして quill/dist を生成する。
+      # VITE_API_BASE は渡さず、同一オリジンの /api 相対を使わせる。
+      - name: Build frontend
+        run: |
+          cd quill
+          npm ci
+          npm run build
+
+      - name: Install worker deps
+        run: |
+          cd worker
+          npm ci
+
+      # wrangler.toml の [assets] が ../quill/dist を参照するため、上でビルド済みである必要がある。
+      # GITHUB_CLIENT_SECRET / SESSION_SECRET_KEY は事前に `wrangler secret put` で投入しておく。
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy

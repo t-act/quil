@@ -1,4 +1,6 @@
-# AWS デプロイ手順
+# AWS デプロイ手順（旧構成）
+
+> **この手順は旧 AWS 構成のものです。** Quill は Cloudflare へ移行中で、現行のデプロイ手順は [`deployment-cloudflare.md`](deployment-cloudflare.md) を参照してください。本ドキュメントは並行稼働中の参照用として残しており、切替完了後に削除予定です。
 
 Quill のデプロイ構成:
 

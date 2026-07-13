@@ -1,0 +1,4 @@
+# wrangler dev 用のローカル機密値（コピーして .dev.vars を作成。.dev.vars はコミット禁止）
+GITHUB_CLIENT_SECRET=
+# openssl rand -base64 32 で生成した AES-256 鍵
+SESSION_SECRET_KEY=

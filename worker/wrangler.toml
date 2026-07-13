@@ -1,0 +1,23 @@
+name = "quill"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# フロントエンド（quill/dist）を同一 Worker から配信する。
+# not_found_handling=single-page-application で、静的アセットに一致しないパスは index.html を返す
+# （旧 CloudFront の 403/404→/index.html 設定に相当。React のクライアントサイドルーティング対応）。
+[assets]
+directory = "../quill/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# 機密でない設定値。GITHUB_CLIENT_SECRET と SESSION_SECRET_KEY は `wrangler secret put` で投入する（ここには書かない）。
+[vars]
+ENV = "production"
+GITHUB_CLIENT_ID = "REPLACE_WITH_OAUTH_CLIENT_ID"
+OAUTH_CALLBACK_URL = "https://REPLACE_WITH_DOMAIN/api/auth/callback"
+FRONTEND_ORIGIN = "https://REPLACE_WITH_DOMAIN"
+
+# 独自ドメインを Cloudflare ゾーンに追加後、カスタムドメインを割り当てる。
+# [[routes]]
+# pattern = "REPLACE_WITH_DOMAIN"
+# custom_domain = true

@@ -10,3 +10,5 @@ dist/
 *.tsbuildinfo
 scripts/.deploy-output
 *.zip
+.wrangler
+.dev.vars
