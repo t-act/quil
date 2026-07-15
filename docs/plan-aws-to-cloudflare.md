@@ -8,7 +8,7 @@ Quill は「React/Vite SPA（`quill/`）＋ FastAPI バックエンド（`courie
 
 **確定した方針**
 - backend: **Hono/TypeScript で Cloudflare Workers に書き直し**（`requests`→`fetch`、`Fernet`→Web Crypto AES-GCM）
-- ドメイン: **独自ドメインを Cloudflare に委任**し、Pages/Workers にカスタムドメイン割当
+- ドメイン: **独自ドメインは取得せず `quill.hinami.workers.dev` を本番ドメインとする**（完全な個人利用のため、独自ドメインのコストに見合う価値がないと判断。当初は独自ドメイン委任を予定していたが撤回）
 - 移行方針: **AWS を並行稼働**させたまま Cloudflare 側を構築・検証し、動作確認後に切替（ロールバック容易）
 
 ## 移行マッピング
@@ -26,11 +26,11 @@ Quill は「React/Vite SPA（`quill/`）＋ FastAPI バックエンド（`courie
 ## 最終アーキテクチャ（推奨: 単一 Worker 統合）
 
 ```
-ブラウザ → 独自ドメイン（Cloudflare）→ 単一 Worker
-                                        ├─ /api/*  → Hono（GitHub API プロキシ）
-                                        └─ /*      → Static Assets（quill/dist, SPA fallback）
-                                                          ↓
-                                                    GitHub REST API
+ブラウザ → quill.hinami.workers.dev → 単一 Worker
+                                      ├─ /api/*  → Hono（GitHub API プロキシ）
+                                      └─ /*      → Static Assets（quill/dist, SPA fallback）
+                                                        ↓
+                                                  GitHub REST API
 ```
 
 フロントと API が**完全に同一オリジン**になるため CORS 設定が不要になり、Cookie（`SameSite=Lax`）もそのまま機能する。デプロイも 1 本に統合される。
@@ -77,21 +77,19 @@ Fernet と互換にする必要はない（セッションは 8h で失効・再
 ### 4. `wrangler.toml`
 
 - `main = "src/index.ts"`、`compatibility_date`、`[assets]`（`directory = "../quill/dist"`, `binding`, SPA fallback）
-- `[vars]`: `ENV=production`, `GITHUB_CLIENT_ID`, `OAUTH_CALLBACK_URL`, `FRONTEND_ORIGIN`
+- `[vars]`: `ENV=production`, `GITHUB_CLIENT_ID`, `OAUTH_CALLBACK_URL`, `FRONTEND_ORIGIN`（実値をコミットする。CI がこの値で本番を上書きするため、プレースホルダを残すと本番が壊れる）
 - Secrets（`wrangler secret put` で投入、平文コミットしない）: `GITHUB_CLIENT_SECRET`, `SESSION_SECRET_KEY`
-- `[[routes]]` でカスタムドメイン（`pattern` + `zone_name`）
+- `[[routes]]` はコメントアウトのまま（`workers.dev` を使うため不要）
 
 ### 5. DNS / ドメイン
 
-- 独自ドメインを Cloudflare に追加し、ネームサーバを Cloudflare に委任
-- Worker にカスタムドメインを割当（同一ドメインでフロント・API 両方を配信）
-- 並行稼働中は AWS 側 CloudFront ドメインを残し、DNS 切替のタイミングで本番トラフィックを Cloudflare に向ける
+独自ドメインを取得しない方針としたため、**この工程は不要**。Workers が払い出す `quill.hinami.workers.dev` をそのまま本番ドメインとして使う。ゾーン追加・ネームサーバ委任・カスタムドメイン割当・DNS 切替はいずれも発生しない。
 
 ### 6. GitHub OAuth App
 
-- GitHub OAuth App は callback URL を 1 つしか持てないため、**新規に検証用 OAuth App を作成**（並行稼働中に AWS 版の callback を壊さないため）
-- Homepage: `https://<domain>`、Callback: `https://<domain>/api/auth/callback`（Hono の basePath `/api` に合わせる）
-- 切替完了後、最終的に本番 OAuth App の callback を Cloudflare の URL に統一
+- GitHub OAuth App は callback URL を 1 つしか持てないため、**Cloudflare 用に別の OAuth App を作成**（AWS 版の callback パスは `/auth/callback` で Cloudflare 版の `/api/auth/callback` と異なり、共用できない）
+- Homepage: `https://quill.hinami.workers.dev`、Callback: `https://quill.hinami.workers.dev/api/auth/callback`（Hono の basePath `/api` に合わせる）
+- AWS 版とは別ドメイン・別 App で動くため両者は干渉しない。callback の統一作業は発生しない
 
 ### 7. CI/CD
 
@@ -112,7 +110,7 @@ Fernet と互換にする必要はない（セッションは 8h で失効・再
 | `GITHUB_CLIENT_ID` | `[vars]` | 変数 |
 | `GITHUB_CLIENT_SECRET` | Worker Secret | 機密 |
 | `SESSION_SECRET_KEY`（Fernet鍵）| Worker Secret（AES 32B鍵, base64）| 機密・**新規生成** |
-| `OAUTH_CALLBACK_URL` | `[vars]`（`https://<domain>/api/auth/callback`）| 変数 |
+| `OAUTH_CALLBACK_URL` | `[vars]`（`https://quill.hinami.workers.dev/api/auth/callback`）| 変数 |
 | `FRONTEND_ORIGIN` | `[vars]`（同一オリジンなら実質未使用、CORS撤廃）| 変数 |
 | `ENV=production` | `[vars]` | 変数 |
 | `VITE_API_BASE` | 不要（`/api` 相対）| — |
@@ -124,14 +122,13 @@ Fernet と互換にする必要はない（セッションは 8h で失効・再
    - `/api/auth/me`（認証状態）、`/api/repos`、`/api/files`、`/api/file`
    - 編集して `/api/commit`、`/api/files/create`、`/api/files/delete`（実リポジトリで往復確認）
    - Cookie 属性（HttpOnly / SameSite=Lax / Secure）と 8h TTL 後の 401 挙動
-2. **プレビュー環境**: `wrangler deploy`（検証用 OAuth App + 検証ドメイン or `workers.dev`）で本番相当を通しテスト
-3. **切替**: 検証 OK 後に DNS を Cloudflare へ、本番 OAuth App の callback を更新、本番トラフィックで最終確認
-4. **後片付け**: 一定期間の並行稼働で問題なければ AWS リソースと旧コード/workflow/docs を削除
+2. **本番（`workers.dev`）**: `wrangler deploy` 後、`quill.hinami.workers.dev` で上記フローを通しテスト
+3. **後片付け**: AWS 側を使わなくなったら、AWS リソースと旧コード/workflow/docs を削除
 
 ## 段階移行の順序（まとめ）
 
-1. `worker/`（Hono 実装）を作成しローカル検証
-2. Cloudflare にドメイン追加 + 検証 OAuth App + Secrets 投入 → プレビューデプロイ
-3. `deploy-cloudflare.yml` を追加（AWS workflow は残置）
-4. DNS 切替 → 本番 OAuth App callback 更新 → 本番確認
-5. AWS リソース・旧コード・旧 workflow・旧 docs を削除、README/deployment.md を更新
+1. ~~`worker/`（Hono 実装）を作成しローカル検証~~（完了）
+2. ~~OAuth App 作成 + Secrets 投入 → `workers.dev` へデプロイ~~（完了）
+3. ~~`deploy-cloudflare.yml` を追加（AWS workflow は残置）~~（完了。`main` マージで稼働開始）
+4. ~~DNS 切替~~（ドメイン取得を取りやめたため不要）
+5. AWS リソース・旧コード・旧 workflow・旧 docs を削除、README/deployment.md を更新 ← **残作業はここだけ**

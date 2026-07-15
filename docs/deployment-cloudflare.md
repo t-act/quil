@@ -3,11 +3,11 @@
 Quill の Cloudflare 構成:
 
 ```
-ブラウザ → 独自ドメイン（Cloudflare）→ 単一 Worker
-                                        ├─ /api/*  → Hono（GitHub API プロキシ）
-                                        └─ /*      → Static Assets（quill/dist, SPA fallback）
-                                                          ↓
-                                                    GitHub REST API
+ブラウザ → quill.hinami.workers.dev → 単一 Worker
+                                      ├─ /api/*  → Hono（GitHub API プロキシ）
+                                      └─ /*      → Static Assets（quill/dist, SPA fallback）
+                                                        ↓
+                                                  GitHub REST API
 ```
 
 フロントエンドと API を**同一 Worker・同一オリジン**で配信するため、CORS 設定は不要。セッションは AES-256-GCM の暗号化 Cookie（DB 不要・完全ステートレス）。
@@ -15,9 +15,10 @@ Quill の Cloudflare 構成:
 ## 前提条件
 
 - Cloudflare アカウント（Workers 有効）
-- 独自ドメインを Cloudflare に追加済み（ネームサーバを Cloudflare に委任）
 - Node.js 20+
 - `worker/` で `npm install` 済み
+
+> 個人利用のため独自ドメインは取得せず、Workers が標準で払い出す `*.workers.dev` をそのまま本番ドメインとして使う。独自ドメインを使う場合の手順は「10. 独自ドメインを割り当てる場合」を参照。
 
 ---
 
@@ -35,23 +36,17 @@ openssl rand -base64 32
 
 ## 2. `wrangler.toml` の設定
 
-`worker/wrangler.toml` の `[vars]` を実値に置換する（`GITHUB_CLIENT_ID` / コールバック URL / オリジンはいずれも公開情報なのでコミット可）:
+`worker/wrangler.toml` の `[vars]` はコミット済みの実値で運用する（`GITHUB_CLIENT_ID` / コールバック URL / オリジンはいずれも公開情報なのでコミット可）:
 
 ```toml
 [vars]
 ENV = "production"
-GITHUB_CLIENT_ID = "Ov23li..."
-OAUTH_CALLBACK_URL = "https://app.example.com/api/auth/callback"
-FRONTEND_ORIGIN = "https://app.example.com"
+GITHUB_CLIENT_ID = "Ov23lio3kxTl5gIdlrt3"
+OAUTH_CALLBACK_URL = "https://quill.hinami.workers.dev/api/auth/callback"
+FRONTEND_ORIGIN = "https://quill.hinami.workers.dev"
 ```
 
-カスタムドメインを割り当てる場合は `[[routes]]` のコメントを外す:
-
-```toml
-[[routes]]
-pattern = "app.example.com"
-custom_domain = true
-```
+> ここをプレースホルダのままにしないこと。`deploy-cloudflare.yml` はリポジトリの `wrangler.toml` をそのまま適用するため、`[vars]` の値が本番の設定を無条件に上書きする。ダッシュボードで直接編集しても次回デプロイで巻き戻る。
 
 ---
 
@@ -65,20 +60,30 @@ npx wrangler secret put GITHUB_CLIENT_SECRET
 npx wrangler secret put SESSION_SECRET_KEY   # 手順 1 で生成した値
 ```
 
+`GITHUB_CLIENT_SECRET` が client_id と対応していないと、ログインが `GitHub token error: The client_id and/or client_secret passed are incorrect.` で失敗する。投入した値が正しいかは GitHub に直接問い合わせて確認できる:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -u "<client_id>:<client_secret>" \
+  -X POST "https://api.github.com/applications/<client_id>/token" \
+  -H "Accept: application/vnd.github+json" -d '{"access_token":"dummy"}'
+```
+
+`404`（ダミートークンが無いだけ）なら資格情報は有効。`401`（Bad credentials）ならペアが誤っている。
+
 ---
 
 ## 4. GitHub OAuth App
 
-並行稼働中は AWS 版の Callback を壊さないよう、**検証用に新しい OAuth App を作成**するのが安全:
+Cloudflare 版は AWS 版とは別の OAuth App を使う（AWS 版の Callback は `/auth/callback` で、`/api` 配下の Cloudflare 版とパスが異なるため共用できない）。設定値:
 
 | 設定 | 値 |
 |---|---|
-| Homepage URL | `https://app.example.com` |
-| Authorization callback URL | `https://app.example.com/api/auth/callback` |
+| Homepage URL | `https://quill.hinami.workers.dev` |
+| Authorization callback URL | `https://quill.hinami.workers.dev/api/auth/callback` |
 
 > Callback パスが `/api/auth/callback` である点に注意（Hono の basePath `/api` 配下）。
 
-切替完了後、本番 OAuth App の Callback を Cloudflare の URL に統一する。
+OAuth App は Callback URL を 1 つしか登録できない。ドメインを変えるときは、この App でログインしている全環境が同時に切り替わる。
 
 ---
 
@@ -145,14 +150,34 @@ SESSION_SECRET_KEY=<openssl rand -base64 32 の値>
 | `GITHUB_CLIENT_ID` | vars | OAuth App Client ID |
 | `GITHUB_CLIENT_SECRET` | secret | OAuth App Client Secret |
 | `SESSION_SECRET_KEY` | secret | AES-256 鍵（base64 32 バイト、`openssl rand -base64 32`） |
-| `OAUTH_CALLBACK_URL` | vars | `https://<domain>/api/auth/callback` |
+| `OAUTH_CALLBACK_URL` | vars | `https://quill.hinami.workers.dev/api/auth/callback` |
 | `FRONTEND_ORIGIN` | vars | ログイン後のリダイレクト先オリジン |
 | `ENV` | vars | `production` で Secure Cookie 有効化 |
+
+`OAUTH_CALLBACK_URL` / `FRONTEND_ORIGIN` / OAuth App の Callback の 3 つは常に同じドメインを指す。1 つでもずれるとログインが失敗する。
 
 ---
 
 ## 9. AWS からの切替と後片付け
 
-1. 検証ドメイン or `workers.dev` で全 API フローを確認（ログイン → 一覧 → 編集 → コミット/作成/削除）
-2. DNS を Cloudflare に向け、本番 OAuth App の Callback を Cloudflare の URL に更新、本番トラフィックで最終確認
-3. 一定期間の並行稼働で問題なければ AWS リソース（Lambda / API Gateway / S3 / CloudFront / IAM）と旧コード（`courier/` / `scripts/setup-aws.sh` / 旧 workflow / `docs/deployment.md`）を削除
+1. `workers.dev` で全 API フローを確認（ログイン → 一覧 → 編集 → コミット/作成/削除）
+2. 問題なければ AWS リソース（Lambda / API Gateway / S3 / CloudFront / IAM）と旧コード（`courier/` / `scripts/setup-aws.sh` / 旧 workflow / `docs/deployment.md`）を削除
+
+Cloudflare 版は AWS 版と別ドメイン・別 OAuth App で動くため、両者は互いに干渉しない。DNS の切替作業はなく、利用する URL を変えるだけで移行が完了する。
+
+---
+
+## 10. 独自ドメインを割り当てる場合
+
+現構成では不要（`*.workers.dev` で運用）。将来割り当てるなら:
+
+1. ドメインを Cloudflare にゾーンとして追加し、ネームサーバを Cloudflare に委任する
+2. `wrangler.toml` の `[[routes]]` のコメントを外す（証明書と DNS レコードは `wrangler deploy` 時に自動作成される）
+
+   ```toml
+   [[routes]]
+   pattern = "app.example.com"
+   custom_domain = true
+   ```
+3. `[vars]` の `OAUTH_CALLBACK_URL` / `FRONTEND_ORIGIN` を新ドメインに変更してデプロイ
+4. OAuth App の Homepage / Callback を新ドメインに変更（この時点で `workers.dev` でのログインは動かなくなる）
