@@ -13,9 +13,9 @@ not_found_handling = "single-page-application"
 # 機密でない設定値。GITHUB_CLIENT_SECRET と SESSION_SECRET_KEY は `wrangler secret put` で投入する（ここには書かない）。
 [vars]
 ENV = "production"
-GITHUB_CLIENT_ID = "REPLACE_WITH_OAUTH_CLIENT_ID"
-OAUTH_CALLBACK_URL = "https://REPLACE_WITH_DOMAIN/api/auth/callback"
-FRONTEND_ORIGIN = "https://REPLACE_WITH_DOMAIN"
+GITHUB_CLIENT_ID = "Ov23lio3kxTl5gIdlrt3"
+OAUTH_CALLBACK_URL = "https://quill.hinami.workers.dev/api/auth/callback"
+FRONTEND_ORIGIN = "https://quill.hinami.workers.dev"
 
 # 独自ドメインを Cloudflare ゾーンに追加後、カスタムドメインを割り当てる。
 # [[routes]]
